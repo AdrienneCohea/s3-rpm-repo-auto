@@ -6,9 +6,10 @@ FROM amazonlinux:2023
 # - createrepo_c: pinned for reproducibility
 RUN dnf upgrade -y && \
     dnf install -y \
-    createrepo_c-0.20.0-1.amzn2023.0.3 \
-    python3-3.9.25-1.amzn2023.0.4 \
+    createrepo_c \
+    python3 \
     python3-pip \
+    shadow-utils \
     && dnf clean all
 
 # Set the working directory
