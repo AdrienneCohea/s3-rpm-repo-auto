@@ -30,7 +30,7 @@ output "sqs_queue_arn" {
 }
 
 output "ecr_repository_url" {
-  value = aws_ecr_repository.repo_lambda.repository_url
+  value = local.ecr_repo_url
 }
 
 output "lambda_function_name" {

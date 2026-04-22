@@ -2,6 +2,16 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
+locals {
+  use_existing_ecr = var.ecr_repository_name != null
+  ecr_repo_url     = local.use_existing_ecr ? data.aws_ecr_repository.existing[0].repository_url : aws_ecr_repository.repo_lambda[0].repository_url
+}
+
+data "aws_ecr_repository" "existing" {
+  count = local.use_existing_ecr ? 1 : 0
+  name  = var.ecr_repository_name
+}
+
 # S3 Bucket
 resource "aws_s3_bucket" "repo" {
   bucket = "${var.project_name}-repo-${random_id.bucket_suffix.hex}"
@@ -92,6 +102,7 @@ resource "aws_s3_bucket_notification" "repo_notification" {
 
 # ECR Repository
 resource "aws_ecr_repository" "repo_lambda" {
+  count                = local.use_existing_ecr ? 0 : 1
   name                 = "${var.project_name}-lambda"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
@@ -106,7 +117,7 @@ resource "aws_lambda_function" "repo_indexer" {
   function_name = "${var.project_name}-indexer"
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.repo_lambda.repository_url}:latest"
+  image_uri     = "${local.ecr_repo_url}:${var.ecr_image_tag}"
 
   vpc_config {
     subnet_ids         = local.subnet_ids

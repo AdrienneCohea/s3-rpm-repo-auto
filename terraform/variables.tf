@@ -33,3 +33,15 @@ variable "lambda_security_group_id" {
   type        = string
   default     = null
 }
+
+variable "ecr_repository_name" {
+  description = "Name of an existing ECR repository to use. If not provided, a new one will be created."
+  type        = string
+  default     = null
+}
+
+variable "ecr_image_tag" {
+  description = "The tag of the image to use for the Lambda function."
+  type        = string
+  default     = "latest"
+}
