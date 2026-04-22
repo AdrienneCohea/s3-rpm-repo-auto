@@ -37,7 +37,7 @@ resource "aws_s3_access_point" "repo_ap" {
   name   = "${var.project_name}-ap"
 
   vpc_configuration {
-    vpc_id = aws_vpc.main.id
+    vpc_id = local.vpc_id
   }
 }
 
@@ -109,7 +109,7 @@ resource "aws_lambda_function" "repo_indexer" {
   image_uri     = "${aws_ecr_repository.repo_lambda.repository_url}:latest"
 
   vpc_config {
-    subnet_ids         = aws_subnet.private[*].id
+    subnet_ids         = local.subnet_ids
     security_group_ids = [aws_security_group.lambda_sg.id]
   }
 

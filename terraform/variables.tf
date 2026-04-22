@@ -15,3 +15,15 @@ variable "vpc_cidr" {
   type        = string
   default     = "10.0.0.0/16"
 }
+
+variable "vpc_id" {
+  description = "ID of an existing VPC to use. If not provided, a new VPC will be created."
+  type        = string
+  default     = null
+}
+
+variable "private_subnet_ids" {
+  description = "List of private subnet IDs in the existing VPC. Required if vpc_id is provided."
+  type        = list(string)
+  default     = []
+}

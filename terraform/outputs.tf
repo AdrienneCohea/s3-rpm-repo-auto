@@ -1,3 +1,13 @@
+output "vpc_id" {
+  description = "The ID of the VPC being used"
+  value       = local.vpc_id
+}
+
+output "private_subnet_ids" {
+  description = "The IDs of the private subnets being used"
+  value       = local.subnet_ids
+}
+
 output "s3_bucket_name" {
   value = aws_s3_bucket.repo.id
 }
