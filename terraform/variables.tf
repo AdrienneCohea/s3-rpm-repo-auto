@@ -27,3 +27,9 @@ variable "private_subnet_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "lambda_security_group_id" {
+  description = "ID of an existing security group to use for the Lambda function. If not provided, a new one will be created."
+  type        = string
+  default     = null
+}

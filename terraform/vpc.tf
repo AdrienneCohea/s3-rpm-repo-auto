@@ -4,6 +4,9 @@ locals {
   use_existing_vpc = var.vpc_id != null
   vpc_id           = local.use_existing_vpc ? var.vpc_id : aws_vpc.main[0].id
   subnet_ids       = local.use_existing_vpc ? var.private_subnet_ids : aws_subnet.private[*].id
+
+  use_existing_sg = var.lambda_security_group_id != null
+  lambda_sg_id    = local.use_existing_sg ? var.lambda_security_group_id : aws_security_group.lambda_sg[0].id
 }
 
 resource "aws_vpc" "main" {
@@ -29,6 +32,7 @@ resource "aws_subnet" "private" {
 }
 
 resource "aws_security_group" "lambda_sg" {
+  count       = local.use_existing_sg ? 0 : 1
   name        = "${var.project_name}-lambda-sg"
   description = "Security group for Lambda function"
   vpc_id      = local.vpc_id
@@ -54,7 +58,7 @@ resource "aws_security_group" "nfs_sg" {
     from_port       = 2049
     to_port         = 2049
     protocol        = "tcp"
-    security_groups = [aws_security_group.lambda_sg.id]
+    security_groups = [local.lambda_sg_id]
   }
 
   egress {

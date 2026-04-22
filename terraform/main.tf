@@ -110,7 +110,7 @@ resource "aws_lambda_function" "repo_indexer" {
 
   vpc_config {
     subnet_ids         = local.subnet_ids
-    security_group_ids = [aws_security_group.lambda_sg.id]
+    security_group_ids = [local.lambda_sg_id]
   }
 
   # S3 Mount - Using the file_system_config (assuming support for S3 AP ARN)

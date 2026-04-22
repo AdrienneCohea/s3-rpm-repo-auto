@@ -8,6 +8,11 @@ output "private_subnet_ids" {
   value       = local.subnet_ids
 }
 
+output "lambda_security_group_id" {
+  description = "The ID of the security group being used by the Lambda function"
+  value       = local.lambda_sg_id
+}
+
 output "s3_bucket_name" {
   value = aws_s3_bucket.repo.id
 }
