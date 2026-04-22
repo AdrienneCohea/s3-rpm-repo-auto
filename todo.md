@@ -20,14 +20,14 @@
     - [ ] Lambda execution role with VPC access, SQS consumption, and S3 File System permissions.
 
 ## 2. Container Image (Lambda)
-- [ ] **Dockerfile:**
-    - [ ] Base: Amazon Linux 2023.
-    - [ ] Install `createrepo_c`.
-    - [ ] Entrypoint script to handle indexing logic.
-- [ ] **Indexing Logic:**
-    - [ ] Check for existence of `/mnt/repo/repodata/`.
-    - [ ] If NOT exists: Run `createrepo_c /mnt/repo`.
-    - [ ] If exists: Run `createrepo_c --update /mnt/repo`.
+- [x] **Dockerfile:**
+    - [x] Base: Amazon Linux 2023.
+    - [x] Install `createrepo_c`.
+    - [x] Entrypoint script to handle indexing logic.
+- [x] **Indexing Logic:**
+    - [x] Check for existence of `/mnt/repo/repodata/`.
+    - [x] If NOT exists: Run `createrepo_c /mnt/repo`.
+    - [x] If exists: Run `createrepo_c --update /mnt/repo`.
 - [ ] **ECR Repository:** Create repository and push the container image.
 
 ## 3. Validation & Testing
