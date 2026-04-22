@@ -55,9 +55,13 @@ resource "aws_iam_policy" "lambda_s3_policy" {
       {
         Action = [
           "s3:GetObject",
+          "s3:GetObjectVersion",
           "s3:PutObject",
           "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:GetAccessPoint",
+          "s3files:ClientMount",
+          "s3files:ClientWrite"
         ]
         Effect   = "Allow"
         Resource = [

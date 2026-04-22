@@ -35,6 +35,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "repo" {
     id     = "expire-non-current"
     status = "Enabled"
 
+    filter {}
+
     noncurrent_version_expiration {
       noncurrent_days = 30
     }
@@ -112,7 +114,7 @@ resource "aws_ecr_repository" "repo_lambda" {
   }
 }
 
-# Lambda Function (Placeholder image URI, will be updated during deployment)
+# Lambda Function
 resource "aws_lambda_function" "repo_indexer" {
   function_name = "${var.project_name}-indexer"
   role          = aws_iam_role.lambda_role.arn
@@ -124,9 +126,7 @@ resource "aws_lambda_function" "repo_indexer" {
     security_group_ids = [local.lambda_sg_id]
   }
 
-  # S3 Mount - Using the file_system_config (assuming support for S3 AP ARN)
-  # Note: In some terraform versions, this might need a specific provider version or might be handled differently.
-  # If it fails, it might need to be EFS, but the requirement specifically said S3 Files.
+  # S3 Mount via S3 Files feature (using S3 Access Point)
   file_system_config {
     arn              = aws_s3_access_point.repo_ap.arn
     local_mount_path = "/mnt/repo"
