@@ -1,23 +1,23 @@
 # Implementation Plan: S3 RPM Repository with Lambda Auto-Indexing
 
 ## 1. Infrastructure (Terraform)
-- [ ] **S3 Bucket:** Create bucket with versioning enabled.
-- [ ] **S3 Lifecycle Policy:** Configure a rule to expire non-current versions after 30 days.
-- [ ] **VPC Infrastructure:**
-    - [ ] Create or identify a VPC with private subnets.
-    - [ ] Create an S3 File System mount target in the VPC subnets.
-    - [ ] Configure Security Groups to allow NFS (Port 2049) traffic.
-- [ ] **SQS Queue:**
-    - [ ] Create a standard SQS queue to buffer S3 event notifications.
-    - [ ] Configure a redrive policy/DLQ for failed indexing jobs.
-- [ ] **S3 Notifications:** Configure the bucket to send `s3:ObjectCreated:*` and `s3:ObjectRemoved:*` events for suffix `.rpm` to the SQS queue.
-- [ ] **Lambda Function:**
-    - [ ] Configure to run inside the VPC.
-    - [ ] Mount the S3 bucket using the **S3 Files** feature at `/mnt/repo`.
-    - [ ] Set **Reserved Concurrency to 1** to prevent race conditions.
-    - [ ] Set SQS as the event source trigger.
-- [ ] **IAM Roles:**
-    - [ ] Lambda execution role with VPC access, SQS consumption, and S3 File System permissions.
+- [x] **S3 Bucket:** Create bucket with versioning enabled.
+- [x] **S3 Lifecycle Policy:** Configure a rule to expire non-current versions after 30 days.
+- [x] **VPC Infrastructure:**
+    - [x] Create or identify a VPC with private subnets.
+    - [x] Create an S3 File System mount target in the VPC subnets.
+    - [x] Configure Security Groups to allow NFS (Port 2049) traffic.
+- [x] **SQS Queue:**
+    - [x] Create a standard SQS queue to buffer S3 event notifications.
+    - [x] Configure a redrive policy/DLQ for failed indexing jobs.
+- [x] **S3 Notifications:** Configure the bucket to send `s3:ObjectCreated:*` and `s3:ObjectRemoved:*` events for suffix `.rpm` to the SQS queue.
+- [x] **Lambda Function:**
+    - [x] Configure to run inside the VPC.
+    - [x] Mount the S3 bucket using the **S3 Files** feature at `/mnt/repo`.
+    - [x] Set **Reserved Concurrency to 1** to prevent race conditions.
+    - [x] Set SQS as the event source trigger.
+- [x] **IAM Roles:**
+    - [x] Lambda execution role with VPC access, SQS consumption, and S3 File System permissions.
 
 ## 2. Container Image (Lambda)
 - [ ] **Dockerfile:**

@@ -1,0 +1,27 @@
+output "s3_bucket_name" {
+  value = aws_s3_bucket.repo.id
+}
+
+output "s3_bucket_arn" {
+  value = aws_s3_bucket.repo.arn
+}
+
+output "sqs_queue_url" {
+  value = aws_sqs_queue.repo_queue.id
+}
+
+output "sqs_queue_arn" {
+  value = aws_sqs_queue.repo_queue.arn
+}
+
+output "ecr_repository_url" {
+  value = aws_ecr_repository.repo_lambda.repository_url
+}
+
+output "lambda_function_name" {
+  value = aws_lambda_function.repo_indexer.function_name
+}
+
+output "s3_access_point_arn" {
+  value = aws_s3_access_point.repo_ap.arn
+}
