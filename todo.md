@@ -16,10 +16,21 @@
     - [x] Mount the S3 bucket using the **S3 Files** feature at `/mnt/repo`.
     - [x] Set **Reserved Concurrency to 1** to prevent race conditions.
     - [x] Set SQS as the event source trigger.
-- [x] **IAM Roles:**
+- [ ] **IAM Roles:**
     - [x] Lambda execution role with VPC access, SQS consumption, and S3 File System permissions.
+- [x] **Security & Hardening:**
+    - [x] S3 Bucket: Public access blocked and HTTPS enforced.
+    - [x] S3 Bucket: Server-side encryption with SSE-KMS (single key).
+    - [x] S3 Bucket: Server access logging enabled.
+    - [x] SQS Queue: Encryption with SSE-KMS (single key).
+    - [x] IAM: Least privilege enforced for Lambda S3/SQS/KMS access.
+    - [x] Network: Restricted Lambda egress to VPC endpoints (SQS, ECR, Logs) and S3.
+    - [x] CloudWatch Logs: Explicit log group with retention for Lambda.
+    - [x] Container: Configured to run as a non-root user.
+    - [x] ECR: Scan on push and KMS encryption enabled.
 
 ## 2. Container Image (Lambda)
+
 - [x] **Dockerfile:**
     - [x] Base: Amazon Linux 2023.
     - [x] Install `createrepo_c`.

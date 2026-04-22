@@ -17,8 +17,18 @@ WORKDIR /var/task
 # This is required when using a base image that is not a Lambda-provided base image
 RUN pip3 install awslambdaric
 
+# Create a non-root user to run the Lambda function
+RUN groupadd -g 1001 lambdauser && \
+    useradd -u 1001 -g lambdauser -s /bin/sh lambdauser
+
 # Copy the indexing script into the container
 COPY index.py .
+
+# Ensure the non-root user has ownership of the task directory
+RUN chown -R lambdauser:lambdauser /var/task
+
+# Switch to the non-root user
+USER lambdauser
 
 # Set the entrypoint to the Lambda Runtime Interface Client
 # This allows the container to talk to the Lambda Runtime API

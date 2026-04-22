@@ -12,12 +12,93 @@ data "aws_ecr_repository" "existing" {
   name  = var.ecr_repository_name
 }
 
+# S3 Bucket for Logging
+# tfsec:ignore:aws-s3-enable-bucket-logging
+resource "aws_s3_bucket" "logs" {
+  bucket = "${var.project_name}-logs-${random_id.bucket_suffix.hex}"
+
+  tags = {
+    Name = "${var.project_name}-logs"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "logs" {
+  bucket = aws_s3_bucket.logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+resource "aws_s3_bucket_versioning" "logs" {
+  bucket = aws_s3_bucket.logs.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "logs" {
+  bucket = aws_s3_bucket.logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.main.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+# S3 Bucket
+
+resource "aws_s3_bucket_policy" "logs" {
+  bucket = aws_s3_bucket.logs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "EnforceHTTPS"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.logs.arn,
+          "${aws_s3_bucket.logs.arn}/*"
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
+
 # S3 Bucket
 resource "aws_s3_bucket" "repo" {
   bucket = "${var.project_name}-repo-${random_id.bucket_suffix.hex}"
 
   tags = {
     Name = "${var.project_name}-repo"
+  }
+}
+
+resource "aws_s3_bucket_logging" "repo" {
+  bucket = aws_s3_bucket.repo.id
+
+  target_bucket = aws_s3_bucket.logs.id
+  target_prefix = "log/"
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "repo" {
+  bucket = aws_s3_bucket.repo.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.main.arn
+      sse_algorithm     = "aws:kms"
+    }
   }
 }
 
@@ -43,6 +124,40 @@ resource "aws_s3_bucket_lifecycle_configuration" "repo" {
   }
 }
 
+resource "aws_s3_bucket_public_access_block" "repo" {
+  bucket = aws_s3_bucket.repo.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_policy" "repo" {
+  bucket = aws_s3_bucket.repo.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "EnforceHTTPS"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.repo.arn,
+          "${aws_s3_bucket.repo.arn}/*"
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
+
 # S3 Access Point for Lambda Mount
 resource "aws_s3_access_point" "repo_ap" {
   bucket = aws_s3_bucket.repo.id
@@ -55,11 +170,15 @@ resource "aws_s3_access_point" "repo_ap" {
 
 # SQS Queue and DLQ
 resource "aws_sqs_queue" "repo_dlq" {
-  name = "${var.project_name}-dlq"
+  name                              = "${var.project_name}-dlq"
+  kms_master_key_id                 = aws_kms_key.main.id
+  kms_data_key_reuse_period_seconds = 300
 }
 
 resource "aws_sqs_queue" "repo_queue" {
-  name = "${var.project_name}-queue"
+  name                              = "${var.project_name}-queue"
+  kms_master_key_id                 = aws_kms_key.main.id
+  kms_data_key_reuse_period_seconds = 300
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.repo_dlq.arn
     maxReceiveCount     = 5
@@ -106,20 +225,40 @@ resource "aws_s3_bucket_notification" "repo_notification" {
 resource "aws_ecr_repository" "repo_lambda" {
   count                = local.use_existing_ecr ? 0 : 1
   name                 = "${var.project_name}-lambda"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
   force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
   }
+
+  encryption_configuration {
+    encryption_type = "KMS"
+    kms_key         = aws_kms_key.main.arn
+  }
 }
 
 # Lambda Function
+resource "aws_cloudwatch_log_group" "lambda" {
+  name              = "/aws/lambda/${var.project_name}-indexer"
+  retention_in_days = 14
+  kms_key_id        = aws_kms_key.main.arn
+}
+
 resource "aws_lambda_function" "repo_indexer" {
   function_name = "${var.project_name}-indexer"
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
   image_uri     = "${local.ecr_repo_url}:${var.ecr_image_tag}"
+
+  tracing_config {
+    mode = "Active"
+  }
+
+  logging_config {
+    log_format = "JSON"
+    log_group  = aws_cloudwatch_log_group.lambda.name
+  }
 
   vpc_config {
     subnet_ids         = local.subnet_ids
