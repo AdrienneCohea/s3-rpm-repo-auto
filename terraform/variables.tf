@@ -45,3 +45,9 @@ variable "ecr_image_tag" {
   type        = string
   default     = "latest"
 }
+
+variable "repo_mount_path" {
+  description = "The local mount path for the S3 bucket in the Lambda function."
+  type        = string
+  default     = "/mnt/repo"
+}

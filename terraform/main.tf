@@ -268,7 +268,13 @@ resource "aws_lambda_function" "repo_indexer" {
   # S3 Mount via S3 Files feature (using S3 Access Point)
   file_system_config {
     arn              = aws_s3_access_point.repo_ap.arn
-    local_mount_path = "/mnt/repo"
+    local_mount_path = var.repo_mount_path
+  }
+
+  environment {
+    variables = {
+      REPO_PATH = var.repo_mount_path
+    }
   }
 
   reserved_concurrent_executions = 1

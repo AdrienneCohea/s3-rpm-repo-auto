@@ -1,38 +1,31 @@
 # Use Amazon Linux 2023 as the base image
 FROM amazonlinux:2023
 
-# Install dependencies:
-# - createrepo_c: for repository indexing
-# - python3 and pip: to run the Lambda handler and install the RIC
-RUN dnf install -y \
-    createrepo_c \
-    python3 \
+# Update system and install dependencies
+# - dnf upgrade: patches known vulnerabilities in the base image
+# - createrepo_c: pinned for reproducibility
+RUN dnf upgrade -y && \
+    dnf install -y \
+    createrepo_c-0.20.0-1.amzn2023.0.3 \
+    python3-3.9.25-1.amzn2023.0.4 \
     python3-pip \
     && dnf clean all
 
-# Set the working directory for the Lambda function
+# Set the working directory
 WORKDIR /var/task
 
-# Install the Lambda Runtime Interface Client (RIC) for Python
-# This is required when using a base image that is not a Lambda-provided base image
-RUN pip3 install awslambdaric
+# Install RIC with pinning and without cache
+RUN pip3 install --no-cache-dir awslambdaric==4.0.0
 
-# Create a non-root user to run the Lambda function
+# Create a non-root user
 RUN groupadd -g 1001 lambdauser && \
     useradd -u 1001 -g lambdauser -s /bin/sh lambdauser
 
-# Copy the indexing script into the container
+# Copy script and set ownership
 COPY index.py .
-
-# Ensure the non-root user has ownership of the task directory
 RUN chown -R lambdauser:lambdauser /var/task
 
-# Switch to the non-root user
 USER lambdauser
 
-# Set the entrypoint to the Lambda Runtime Interface Client
-# This allows the container to talk to the Lambda Runtime API
 ENTRYPOINT [ "/usr/bin/python3", "-m", "awslambdaric" ]
-
-# Set the CMD to the handler function in index.py
 CMD [ "index.handler" ]

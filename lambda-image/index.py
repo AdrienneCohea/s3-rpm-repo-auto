@@ -10,7 +10,7 @@ def handler(event, context):
     """
     Lambda handler to update or initialize an RPM repository.
     """
-    repo_dir = "/mnt/repo"
+    repo_dir = os.environ.get("REPO_PATH", "/mnt/repo")
     repodata_dir = os.path.join(repo_dir, "repodata")
     
     logger.info(f"Checking for repodata in {repo_dir}")
@@ -28,7 +28,9 @@ def handler(event, context):
     try:
         # Run createrepo_c and capture output
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        logger.info(f"createrepo_c output: {result.stdout}")
+        logger.info("createrepo_c completed successfully.")
+        # Log only a summary if needed, avoiding potentially verbose/sensitive output
+        # logger.debug(f"createrepo_c output: {result.stdout}")
         
         return {
             'statusCode': 200,

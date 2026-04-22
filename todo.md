@@ -26,7 +26,7 @@
     - [x] IAM: Least privilege enforced for Lambda S3/SQS/KMS access.
     - [x] Network: Restricted Lambda egress to VPC endpoints (SQS, ECR, Logs) and S3.
     - [x] CloudWatch Logs: Explicit log group with retention for Lambda.
-    - [x] Container: Configured to run as a non-root user.
+    - [x] Container: Hardened image (dnf upgrade, dependency pinning, non-root user).
     - [x] ECR: Scan on push and KMS encryption enabled.
 
 ## 2. Container Image (Lambda)
