@@ -2,13 +2,10 @@
 set -e
 
 # Configuration
-REGION=$(aws configure get region)
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 REPO_NAME="s3-rpm-repo-lambda"
 IMAGE_TAG="latest"
-ECR_URL="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}"
 
-echo "Region: $REGION"
 echo "Account ID: $ACCOUNT_ID"
 
 # 1. Build the image
@@ -30,9 +27,11 @@ terraform apply -auto-approve
 # Get outputs
 S3_BUCKET=$(terraform output -raw s3_bucket_name)
 ECR_REPO_URL=$(terraform output -raw ecr_repository_url)
+REGION=$(terraform output -raw aws_region)
 
 echo "S3 Bucket: $S3_BUCKET"
 echo "ECR Repo: $ECR_REPO_URL"
+echo "Region: $REGION"
 
 # 3. Push to ECR
 echo "Logging into ECR..."

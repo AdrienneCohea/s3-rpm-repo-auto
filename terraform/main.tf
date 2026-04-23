@@ -15,12 +15,14 @@ data "aws_ecr_repository" "existing" {
 # S3 Bucket for Logging
 # tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "logs" {
-  bucket = "${var.project_name}-logs-${random_id.bucket_suffix.hex}"
+  bucket        = "${var.project_name}-logs-${random_id.bucket_suffix.hex}"
+  force_destroy = true
 
   tags = {
     Name = "${var.project_name}-logs"
   }
 }
+
 
 resource "aws_s3_bucket_public_access_block" "logs" {
   bucket = aws_s3_bucket.logs.id
@@ -77,7 +79,8 @@ resource "aws_s3_bucket_policy" "logs" {
 
 # S3 Bucket
 resource "aws_s3_bucket" "repo" {
-  bucket = "${var.project_name}-repo-${random_id.bucket_suffix.hex}"
+  bucket        = "${var.project_name}-repo-${random_id.bucket_suffix.hex}"
+  force_destroy = true
 
   tags = {
     Name = "${var.project_name}-repo"
@@ -158,15 +161,42 @@ resource "aws_s3_bucket_policy" "repo" {
   })
 }
 
-# S3 Access Point for Lambda Mount
-resource "aws_s3_access_point" "repo_ap" {
-  bucket = aws_s3_bucket.repo.id
-  name   = "${var.project_name}-ap"
+# S3 Files File System for Lambda Mount
+resource "aws_s3files_file_system" "repo_fs" {
+  bucket   = aws_s3_bucket.repo.arn
+  role_arn = aws_iam_role.s3files_role.arn
 
-  vpc_configuration {
-    vpc_id = local.vpc_id
+  tags = {
+    Name = "${var.project_name}-fs"
   }
 }
+
+resource "aws_s3files_mount_target" "repo_mt" {
+  count           = length(local.subnet_ids)
+  file_system_id  = aws_s3files_file_system.repo_fs.id
+  subnet_id       = local.subnet_ids[count.index]
+  security_groups = [local.lambda_sg_id]
+}
+
+resource "aws_s3files_access_point" "repo_ap" {
+  file_system_id = aws_s3files_file_system.repo_fs.id
+
+  posix_user {
+    gid = 1001
+    uid = 1001
+  }
+
+  root_directory {
+    path = "/"
+
+    creation_permissions {
+      owner_uid = 1001
+      owner_gid = 1001
+      permissions = "0755"
+    }
+  }
+}
+
 
 # SQS Queue and DLQ
 resource "aws_sqs_queue" "repo_dlq" {
@@ -179,6 +209,7 @@ resource "aws_sqs_queue" "repo_queue" {
   name                              = "${var.project_name}-queue"
   kms_master_key_id                 = aws_kms_key.main.id
   kms_data_key_reuse_period_seconds = 300
+  visibility_timeout_seconds        = 300
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.repo_dlq.arn
     maxReceiveCount     = 5
@@ -265,9 +296,9 @@ resource "aws_lambda_function" "repo_indexer" {
     security_group_ids = [local.lambda_sg_id]
   }
 
-  # S3 Mount via S3 Files feature (using S3 Access Point)
+  # S3 Mount via S3 Files feature
   file_system_config {
-    arn              = aws_s3_access_point.repo_ap.arn
+    arn              = aws_s3files_access_point.repo_ap.arn
     local_mount_path = var.repo_mount_path
   }
 

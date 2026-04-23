@@ -42,5 +42,9 @@ output "lambda_function_name" {
 }
 
 output "s3_access_point_arn" {
-  value = aws_s3_access_point.repo_ap.arn
+  value = aws_s3files_access_point.repo_ap.arn
+}
+
+output "aws_region" {
+  value = var.aws_region
 }

@@ -38,6 +38,13 @@ resource "aws_security_group" "lambda_sg" {
   description = "Security group for Lambda function"
   vpc_id      = local.vpc_id
 
+  ingress {
+    from_port = 2049
+    to_port   = 2049
+    protocol  = "tcp"
+    self      = true
+  }
+
   egress {
     from_port   = 443
     to_port     = 443
@@ -52,6 +59,13 @@ resource "aws_security_group" "lambda_sg" {
     protocol        = "tcp"
     prefix_list_ids = [data.aws_prefix_list.s3.id]
     description     = "Allow HTTPS egress to S3"
+  }
+
+  egress {
+    from_port = 2049
+    to_port   = 2049
+    protocol  = "tcp"
+    self      = true
   }
 
   tags = {
